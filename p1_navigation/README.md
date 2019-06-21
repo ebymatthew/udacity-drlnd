@@ -60,7 +60,4 @@ the a Unity environment with visualization you can watch the agent as it's train
 
 ### Watching Pre Trained Agent
 
-If you'd like to simply watch the pre-trained agent. Open `p1_navigation/Navigation.ipynb` and run all cells under the following headings in the notebook:
-
-- `1. Start the Environment`
-- `5. Watch a Smart Agent!`
+If you'd like to simply watch the pre-trained agent. Open `p1_navigation/Navigation.inference.ipynb` and run all cells.

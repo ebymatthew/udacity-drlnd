@@ -93,7 +93,7 @@ achieves an average score of 13.0:
 # Future Work
  
 To further improve the performance of our agent there are variety of approaches that could be evaluated. A short summary
-of next steps are described below:
+of suggested next steps are described below:
 
 *Hyperparameter Optimization*
 

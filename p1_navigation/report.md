@@ -14,7 +14,53 @@ https://www.youtube.com/watch?time_continue=94&v=WQgdnzzhSLM
 
 You should also describe your experience in arriving at the chosen hyper-parameter values. It is important to document how did you tuned the values of the hyper-parameters which helps to gain the intuition about how/which the hyper-parameters values influence the performance of the deep reinforcement learning agent given the environment.
 
-## P1 Notes
+## Section Content
+
+### Learning Algorithm
+
+**Bellman Equation**
+
+The *Bellman Equation* in the context of Reinforcement Learning is defined below:
+
+![Bellman Equation](./img/bellman.jpg)
+
+The equation is a recursive function which formulates the RL problem a value optimization problem.
+Present value is defined as the value of the current state plus the discounted value of future states.
+The discounted future reward is calculated assuming optimal actions are taken in all future time steps.
+Future rewards are denoted by the *max* term in the Bellman Equation.
+
+**TD Learning**
+
+*Temporal Difference Learning* is a reinforcement learning algorithm based on the Bellman equation that is used to learn value estimation functions.
+Below is the TD Update equation:
+
+![TD Learning Update Equation](./img/td_update_equation.jpg)
+
+In order to learn, the algorithm uses an agent to take actions and gather information on rewards based on state-action pairs.
+The reward signal provides the agent information on which actions are good actions and which actions are bad actions.
+
+In TD Learning, the *Bellman Equation* is used to define the *TD Target*. 
+The *TD Target* estimates the expected state value using the actual reward of the current step and the estimated reward for the next time step.
+The *TD Error* is calculated by subtracting the current value estimate from the *TD Target*. The value estimate is then updated by multiplying the *TD Error* by the learning rate, *a*, and adding to the current estimate.
+
+RL methods using TD learning are also, commonly called Q-learning, since the value function in the Bellman equation is often represented as Q.
+
+**Value Functions**
+
+Together the *Bellman Equation* and the *TD Learning Algorithm* described above form the foundation of value based reinforcement learning methods.
+These equations specifically do not prescribe the form that the value function takes. In classical
+Reinforcement Learning the value estimate is defined using lookup tables where there is a value estimate enumerated
+for each state-action pair. This approach works well for small problems discrete state spaces, but it becomes intractable as state and action spaces grow.
+
+For large or continuous state-action spaces approximate methods can be used. Recent advances in Deep Neural Networks have 
+made neural architectures the preferred approach for many common high-dimensional machine learning tasks. Likewise, the neural networks
+can be used as the function approximator for reinforcement learning tasks. Q-learning models using a neural network as the Q function
+approximator are referred to as Deep Q-Networks (DQN).
+
+*Hyperparameters Choice*
+
+
+#### Parameter Tuning Notes P1 Notes
 
     478 episodes to get mean score of 13 with hidden layers 64 and 64 n_episodes=2000, max_t=1000, eps_start=1.0, eps_end=0.01, eps_decay=0.995 update_every=4
       
@@ -56,7 +102,9 @@ A plot of rewards per episode is included to illustrate that the agent is able t
 
 You should put the reward curve diagram on to the report in your submission.
 
-![Learning Curve](./reward_learning_curve.png)
+## Section Content
+
+![Learning Curve](./img/reward_learning_curve.png)
 
 # Future Work
  
@@ -66,3 +114,6 @@ You need to research and write about the concrete future ideas for improving the
 In order to propose the future ideas, you should state what are the problems encountered in the current architect setup and how the future ideas will really going to help.
 
 There's a bit of research work here, but it is worth it. It will help you to learn more advanced techniques as you move forward in this nanodegree.
+
+## Section Content
+

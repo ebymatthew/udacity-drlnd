@@ -92,4 +92,18 @@ achieves an average score of 13.0:
 
 # Future Work
  
+To further improve the performance of our agent there are variety of approaches that could be evaluated. A short summary
+of next steps are described below:
 
+*Hyperparameter Optimization*
+
+The parameters described above we chosen based on intuition and manually evaluating a small number of combinations.
+A more thorough parameter search would likely lead to improved model performance. Some common optimization approaches include grid search and bayesian optimzation.
+
+*Network Architecture*
+
+We did not extensively evaluate neural network architectures. There are a large variety of neural architectures that are used to solve tasks across many domains. Future work could explore which architectures preform best.
+
+*Learning from Images*
+
+The input state from the Banana environment included state information, such as position and ray traces from the Unity engine. Future work could explore learning directly from pixels. 

@@ -1,22 +1,4 @@
-# Implementation
-
-The submission includes a file in the root of the GitHub repository or zip file (one of Report.md, Report.ipynb, or Report.pdf) that provides a description of the implementation.
-
-Along with writing the report, I'd also suggest you to write a blog post on this project like on Medium https://medium.com/ which is easier to write on. It will not take you much longer into your write-up and also include the tips given in this review. :D This is a great way to contribute to the AI community by sharing the knowledge.
-
 # Learning Algorithm and Model Architecture
-
-The report clearly describes the learning algorithm, along with the chosen hyperparameters. It also describes the model architectures for any neural networks.
-
-In the report, you should define the Q-learning algorithm using the concepts of the Bellman Equation, Temporal Difference Learning and how the neural networks fit in making it as deep reinforcement learning. All these details are given in the classroom lesson videos. Here's another udacity course lesson video where overview of Q-learning is given out. Q-table is also given out
-
-https://www.youtube.com/watch?time_continue=94&v=WQgdnzzhSLM
-
-You should also describe your experience in arriving at the chosen hyper-parameter values. It is important to document how did you tuned the values of the hyper-parameters which helps to gain the intuition about how/which the hyper-parameters values influence the performance of the deep reinforcement learning agent given the environment.
-
-## Section Content
-
-### Learning Algorithm
 
 **Bellman Equation**
 
@@ -45,7 +27,7 @@ The *TD Error* is calculated by subtracting the current value estimate from the 
 
 RL methods using TD learning are also, commonly called Q-learning, since the value function in the Bellman equation is often represented as Q.
 
-**Value Functions**
+**Deep Q-Networks**
 
 Together the *Bellman Equation* and the *TD Learning Algorithm* described above form the foundation of value based reinforcement learning methods.
 These equations specifically do not prescribe the form that the value function takes. In classical
@@ -57,63 +39,57 @@ made neural architectures the preferred approach for many common high-dimensiona
 can be used as the function approximator for reinforcement learning tasks. Q-learning models using a neural network as the Q function
 approximator are referred to as Deep Q-Networks (DQN).
 
-*Hyperparameters Choice*
+**DQN Learning Algorithm**
 
+In the **TD Learning** section above we described how the agent takes actions, observes rewards and learns from those rewards.
+We did not discuss how the agent decides which actions to take. If the agent always takes what it believes is the best action
+it will never have a chance to discover better actions. If the agent ignores what it knows about good actions and always
+takes a random action it is likely to wander about aimlessly. There is a fundamental
+trade off between exploring new actions and exploiting the environment by performing actions it knows
+are likely to lead to a reward. 
 
-#### Parameter Tuning Notes P1 Notes
+One common approach for balancing the exploitation/exploration trade off is an *epsilon greedy* policy. With this policy,
+where the agent takes a random action with probability *epsilon* and takes the best action with probability *1 - epsilon*.
 
-    478 episodes to get mean score of 13 with hidden layers 64 and 64 n_episodes=2000, max_t=1000, eps_start=1.0, eps_end=0.01, eps_decay=0.995 update_every=4
-      
-    485 episodes to get mean score of 13 with hidden layers 128 and 128 n_episodes=2000, max_t=1000, eps_start=1.0, eps_end=0.01, eps_decay=0.995 update_every=4
-    Score: 0.0
-    Episode 100     Average Score: 0.34
-    Episode 200     Average Score: 3.27
-    Episode 300     Average Score: 6.81
-    Episode 400     Average Score: 10.74
-    Episode 485     Average Score: 13.00
-    Environment solved in 385 episodes!     Average Score: 13.00
-    
-    
-    485 episodes to get mean score of 13 with hidden layers 128 and 128 n_episodes=2000, max_t=1000, eps_start=1.0, eps_end=0.01, eps_decay=0.995 update_every=8
-    Score: 0
-    Episode 100     Average Score: 1.38
-    Episode 200     Average Score: 4.78
-    Episode 300     Average Score: 7.45
-    Episode 400     Average Score: 9.70
-    Episode 500     Average Score: 11.41
-    Episode 535     Average Score: 13.03
-    Environment solved in 435 episodes!     Average Score: 13.03
-    
-    485 episodes to get mean score of 13 with hidden layers 128 and 128 n_episodes=2000, max_t=1000, eps_start=1.0, eps_end=0.01, eps_decay=0.995 update_every=8
-    LR=9e-4
-    Score: 0
-    Episode 100     Average Score: 1.53
-    Episode 200     Average Score: 5.63
-    Episode 300     Average Score: 9.55
-    Episode 400     Average Score: 12.41
-    Episode 424     Average Score: 13.07
-    Environment solved in 324 episodes!     Average Score: 13.07
+On initalization, the *Q* function weights are randomly initialized which means the *Q* function is a poor estimate of the real
+*Q* function. When we don't know much we'd like to favor exploration in order to gain new knowledge and quickly improve our estimate.
+As the quality of the estimate improves we'd like to continue searching for a better estimate but somehow leverage our knowledge.
+ We can do this by favoring searching near what we believe is the optimal policy. In order accomplish this we define an *epsilon_decay* term.
+ On initalization *epsilon* starts high and as training progresses *epsilon* decreases by the decay factor after each episode.
+ 
+In order to smooth out the learning, we'd like gain a variety of experiences before making generalizations about those experiences.
+Updating after every experience can cause unnecessary thrashing. We define an update parameter,*update_every*, that will determine how many
+episodes of experience we will gain before updating the *Q* estimate.
 
+Another method for smoothing out learning is to define two different *Q* networks, a *target* network and a *local* network.
+ The *target* network remains fixed during learning and is used to estimate the future rewards when calculating the *TD Target*.
+This makes our *TD Error* estimate less subject to fluctuations during learning. During the learning step, the weights in the local network
+are updated based on the gradient from the *TD Error*. After each learning step, the target network is updated by blending the previous *target*
+network and the updated *local* network, with *tau* contribution from the *local* network and *1-tau* contribution from the previous *target* network. 
+*tau*
 
+In order to make the most use of our experience we define a reply buffer that will keep the *n* most recent episodes to learn from.
 
-# Reward Learning Curve
+*Hyperparameters*
 
-A plot of rewards per episode is included to illustrate that the agent is able to receive an average reward (over 100 episodes) of at least +13. The submission reports the number of episodes needed to solve the environment.
+A variety of hyperparameters were evaluated, with the following table describing the chosen hyperparameters along with rationale:
 
-You should put the reward curve diagram on to the report in your submission.
+|Parameter|Value|Parameter Description|Rationale|
+|----------|-------|------------|---------------|
+|BUFFER_SIZE|1e5|replay buffer size|This replay buffer size provides sufficient memory to remember enough history to learn from while minimizing memory resources requirements. Too small of a memory would throw away too much gained experience and slow down learning.| 
+|GAMMA|0.99|future reward discount factor|This value balances staying alive to gain future reward and prevents the agent for wondering aimlessly because it doesn't care how far in the future the rewards are obtained. A value less than one gives the agent reason to quickly get to the next reward. If the value is 0, the agent would not care if it dies because future rewards have no value.|
+|TAU|1e-3|for soft update of target parameters|The small value of *tau* results in small incremental updates to the target network over time. As time progresses the *target* network will converge to the true *Q* function.|
+|LR|9e-4|learning rate|Too small of a learning rate would slow learning down, too large of a learning rate would cause weights to fluctuate and prevent convergence|
+|UPDATE_EVERY|4|how often to update the network|Small values will cause us to make conclusions without much experience. Large values slow learning because we don't stop to reflect on our experiences.|
+|eps_start|1.0|starting value of epsilon, for epsilon-greedy action selection|At the beginning of learning we don't know anything so we want to try many different actions to get information about which actions tend to be better|
+|eps_end|0.01|minimum value of epsilon|After we've learned a lot we know generally what actions lead to more rewards. We believe we are near the optimal policy, so we'd like to search near the current policy by mostly taking value maximizing actions and taking small number of random steps.|
+|eps_decay|0.99|multiplicative factor (per episode) for decreasing epsilon|We'd like to slowly transition from exploring to exploiting. A decay of 0.99 allows us to slowly switch to exploit model. Too high of a decay means we never stop exploring. Too low of a decay value means we stop exploring before we've gained enough experience.|
 
-## Section Content
+The following learning curve demonstrates the agent converging after after ~450 episodes. For the Banana, environment we consider the agent successfully trained when it
+achieves an average score of 13.0: 
 
 ![Learning Curve](./img/reward_learning_curve.png)
 
 # Future Work
  
-The submission has concrete future ideas for improving the agent's performance.
-
-You need to research and write about the concrete future ideas for improving the agent's performance in the report file.
-In order to propose the future ideas, you should state what are the problems encountered in the current architect setup and how the future ideas will really going to help.
-
-There's a bit of research work here, but it is worth it. It will help you to learn more advanced techniques as you move forward in this nanodegree.
-
-## Section Content
 

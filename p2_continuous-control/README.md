@@ -8,8 +8,6 @@
 
 This project contains code for training a Deep Deterministic Policy Gradient (DDPG) agent to control a reacher arm that is tracking a positional target.  
 
-![Trained Agent][image1]
-
 This readme contains describes how to install the environment, train an agent and run a trained agent.
 Refer to the [report.md](report.md) for an in depth description of the implementation and how DDPGs work.
 

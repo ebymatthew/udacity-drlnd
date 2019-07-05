@@ -79,13 +79,6 @@ def train(env_location, curve_path, n_episodes=1000):
                 #scores += env_info.rewards                         # update the score (for each agent)
                 #print(f'scores: {scores}')
 
-                reward = rewards[0] # temporarily rename
-                next_state = next_states[0] # temporarily rename
-                done = dones[0] # temporarily rename
-
-                #next_state, reward, done, _ = env.step(action)
-                #print(f'state: {state}, actions[0] {actions[0]}, reward: {reward}, next_state: {next_state}, done {done}')
-
                 for i in range(num_agents):
                     reward = rewards[i] # temporarily rename
                     next_state = next_states[i] # temporarily rename

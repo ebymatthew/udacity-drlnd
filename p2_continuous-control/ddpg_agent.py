@@ -9,8 +9,6 @@ import torch
 import torch.nn.functional as F
 import torch.optim as optim
 
-BUFFER_SIZE = int(1e5)  # replay buffer size
-BATCH_SIZE = 128        # minibatch size
 GAMMA = 0.99            # discount factor
 TAU = 1e-3              # for soft update of target parameters
 LR_ACTOR = 1e-4         # learning rate of the actor 
@@ -20,15 +18,15 @@ UPDATE_EVERY = 20        # how often to update the network
 NUM_UPDATES = 10        # how many updates to perform
 
 
-
 device_name = "cuda:0" if torch.cuda.is_available() else "cpu"
 print(f'Device: {device_name}')
 device = torch.device(device_name)
 
-class Agent():
+
+class Agent:
     """Interacts with and learns from the environment."""
     
-    def __init__(self, state_size, action_size, random_seed):
+    def __init__(self, state_size, action_size, random_seed, memory, batch_size):
         """Initialize an Agent object.
         
         Params
@@ -55,25 +53,24 @@ class Agent():
         self.noise = OUNoise(action_size, random_seed)
 
         # Replay memory
-        self.memory = ReplayBuffer(action_size, BUFFER_SIZE, BATCH_SIZE, random_seed)
+        self.memory = memory
+
+        self.random_seed = random_seed
+        self.batch_size = batch_size
         
         # Initialize time step (for updating every UPDATE_EVERY steps)
         self.t_step = 0
-    
-    def step(self, state, action, reward, next_state, done):
-        """Save experience in replay memory, and use random sample from buffer to learn."""
-        # Save experience / reward
-        self.memory.add(state, action, reward, next_state, done)
 
-        
+    def step(self):
+        """use random sample from buffer to learn."""
         # Learn every UPDATE_EVERY time steps.
-        self.t_step = (self.t_step + 1) % UPDATE_EVERY
-        if self.t_step == 0:
+        #self.t_step = (self.t_step + 1) % UPDATE_EVERY
+        #if self.t_step == 0:
             # Learn, if enough samples are available in memory
-            if len(self.memory) > BATCH_SIZE:
-                for i in range(NUM_UPDATES):
-                    experiences = self.memory.sample()
-                    self.learn(experiences, GAMMA)
+        if len(self.memory) > self.batch_size:
+            #for i in range(NUM_UPDATES):
+            experiences = self.memory.sample()
+            self.learn(experiences, GAMMA)
 
     def act(self, state, add_noise=True):
         """Returns actions for given state as per current policy."""
@@ -164,6 +161,7 @@ class OUNoise:
         dx = self.theta * (self.mu - x) + self.sigma * np.array([random.random() for i in range(len(x))])
         self.state = x + dx
         return self.state
+
 
 class ReplayBuffer:
     """Fixed-size buffer to store experience tuples."""

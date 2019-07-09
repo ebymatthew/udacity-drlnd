@@ -8,7 +8,7 @@ import numpy as np
 from collections import deque
 import matplotlib.pyplot as plt
 
-from ddpg_agent import Agent
+from ddpg_agent import Agent, ReplayBuffer
 import logging
 
 import argparse
@@ -47,7 +47,17 @@ def train(env_location, curve_path, n_episodes=1000):
     logger.info(f'The state for the first agent looks like: {states[0]}')
 
     # reset the environment
-    agent = Agent(state_size=states.shape[1], action_size=brain.vector_action_space_size, random_seed=2)
+
+    # Replay memory
+    BUFFER_SIZE = int(1e6)  # replay buffer size
+    BATCH_SIZE = 1024        # minibatch size
+    random_seed = 2
+    memory = ReplayBuffer(action_size, BUFFER_SIZE, BATCH_SIZE, random_seed)
+
+    def create_agent():
+        return Agent(state_size=states.shape[1], action_size=brain.vector_action_space_size, random_seed=random_seed, memory=memory, batch_size=BATCH_SIZE)
+
+    agents = [create_agent() for _ in range(20)]
 
     def ddpg(n_episodes, max_t=300, print_every=100):
         scores_deque = deque(maxlen=print_every)
@@ -57,14 +67,15 @@ def train(env_location, curve_path, n_episodes=1000):
             env_info = env.reset(train_mode=True)[brain_name]
             states = np.array(env_info.vector_observations, copy=True)                  # get the current state (for each agent)
             # state = env.reset()
-            agent.reset()
+            for agent in agents:
+                agent.reset()
             scores = np.zeros(num_agents)                          # initialize the score (for each agent)
 
             # state = states[0]
 
             for t in range(max_t):
 
-                actions = np.array([agent.act(states[i]) for i, state in enumerate(states)])
+                actions = np.array([agents[i].act(states[i]) for i, state in enumerate(states)])
                 # print(f'action: {action}')
 
                 # actions = np.array([action]) # temporarily rename
@@ -79,11 +90,13 @@ def train(env_location, curve_path, n_episodes=1000):
                 #scores += env_info.rewards                         # update the score (for each agent)
                 #print(f'scores: {scores}')
 
+                # Add experience to replay buffer for all agents
                 for i in range(num_agents):
                     reward = rewards[i] # temporarily rename
                     next_state = next_states[i] # temporarily rename
                     done = dones[i] # temporarily rename
                     action = actions[i]
+                    memory.add(states[i], action, reward, next_state, done)
 
                     #print(f'state: {states[i]}')
                     #print(f'action: {action}')
@@ -91,7 +104,8 @@ def train(env_location, curve_path, n_episodes=1000):
                     #print(f'next_state: {next_state}')
                     #print(f'done: {done}')
 
-                    agent.step(states[i], action, reward, next_state, done)
+                for i in range(num_agents):
+                    agents[i].step()
 
                 scores += env_info.rewards                         # update the score (for each agent)
                 states = next_states                               # roll over states to next time step

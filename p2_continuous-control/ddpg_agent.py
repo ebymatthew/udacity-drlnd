@@ -14,8 +14,8 @@ TAU = 1e-3              # for soft update of target parameters
 LR_ACTOR = 1e-4         # learning rate of the actor 
 LR_CRITIC = 1e-3        # learning rate of the critic
 WEIGHT_DECAY = 0        # L2 weight decay
-UPDATE_EVERY = 20        # how often to update the network
-NUM_UPDATES = 10        # how many updates to perform
+UPDATE_EVERY = 2        # how often to update the network
+NUM_UPDATES = 1        # how many updates to perform
 
 
 device_name = "cuda:0" if torch.cuda.is_available() else "cpu"

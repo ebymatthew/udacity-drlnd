@@ -66,21 +66,12 @@ def train(env_location, curve_path, n_episodes=1000):
         for i_episode in range(1, n_episodes+1):
             env_info = env.reset(train_mode=True)[brain_name]
             states = np.array(env_info.vector_observations, copy=True)                  # get the current state (for each agent)
-            # state = env.reset()
             for agent in agents:
                 agent.reset()
             scores = np.zeros(num_agents)                          # initialize the score (for each agent)
 
-            # state = states[0]
-
             for t in range(max_t):
-
                 actions = np.array([agents[i].act(states[i]) for i, state in enumerate(states)])
-                # print(f'action: {action}')
-
-                # actions = np.array([action]) # temporarily rename
-                actions = np.clip(actions, -1, 1)                  # all actions between -1 and 1
-
                 #print(f'actions: {actions}')
                 env_info = env.step(actions)[brain_name]           # send all actions to tne environment
                 next_states = env_info.vector_observations         # get next state (for each agent)
@@ -109,6 +100,7 @@ def train(env_location, curve_path, n_episodes=1000):
 
                 scores += env_info.rewards                         # update the score (for each agent)
                 states = next_states                               # roll over states to next time step
+                assert np.any(dones) == np.all(dones), "Not all done at the same time"
                 if np.any(dones):                                  # exit loop if episode finished
                     break
             scores_deque.append(scores)

@@ -8,10 +8,13 @@ from model import Actor, Critic
 import torch
 import torch.nn.functional as F
 import torch.optim as optim
+import logging
+
+logger = logging.getLogger(__name__)
 
 GAMMA = 0.99            # discount factor
 TAU = 1e-3              # for soft update of target parameters
-LR_ACTOR = 1e-4         # learning rate of the actor 
+LR_ACTOR = 1e-4         # learning rate of the actor
 LR_CRITIC = 1e-3        # learning rate of the critic
 WEIGHT_DECAY = 0        # L2 weight decay
 UPDATE_EVERY = 20        # how often to update the network
@@ -19,7 +22,7 @@ NUM_UPDATES = 10        # how many updates to perform
 
 
 device_name = "cuda:0" if torch.cuda.is_available() else "cpu"
-print(f'Device: {device_name}')
+logger.info(f'Device: {device_name}')
 device = torch.device(device_name)
 
 
@@ -64,13 +67,13 @@ class Agent:
     def step(self):
         """use random sample from buffer to learn."""
         # Learn every UPDATE_EVERY time steps.
-        #self.t_step = (self.t_step + 1) % UPDATE_EVERY
-        #if self.t_step == 0:
+        self.t_step = (self.t_step + 1) % UPDATE_EVERY
+        if self.t_step == 0:
             # Learn, if enough samples are available in memory
-        if len(self.memory) > self.batch_size:
-            #for i in range(NUM_UPDATES):
-            experiences = self.memory.sample()
-            self.learn(experiences, GAMMA)
+            if len(self.memory) > self.batch_size:
+                for i in range(NUM_UPDATES):
+                    experiences = self.memory.sample()
+                    self.learn(experiences, GAMMA)
 
     def act(self, state, add_noise=True):
         """Returns actions for given state as per current policy."""
@@ -112,6 +115,7 @@ class Agent:
         # Minimize the loss
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
+        torch.nn.utils.clip_grad_norm(self.critic_local.parameters(), 1)
         self.critic_optimizer.step()
 
         # ---------------------------- update actor ---------------------------- #

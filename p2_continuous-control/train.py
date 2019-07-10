@@ -22,6 +22,15 @@ parser.add_argument('--env', default='./Reacher_Linux_NoVis20/Reacher.x86', help
 parser.add_argument('--curve', default='learning.curve.png', help='Location to output learning curve')
 
 
+def plot_curve(scores):
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    plt.plot(np.arange(1, len(scores)+1), scores)
+    plt.ylabel('Score')
+    plt.xlabel('Episode #')
+    plt.savefig('learning.curve.png')
+
+
 def train(env_location, curve_path, n_episodes=1000):
     env = UnityEnvironment(file_name=env_location)
 
@@ -59,7 +68,7 @@ def train(env_location, curve_path, n_episodes=1000):
 
     agents = [create_agent() for _ in range(20)]
 
-    def ddpg(n_episodes, max_t=300, print_every=100):
+    def ddpg(n_episodes, max_t=300, print_every=50, plot_every=10):
         scores_deque = deque(maxlen=print_every)
         scores_all = []
 
@@ -111,19 +120,20 @@ def train(env_location, curve_path, n_episodes=1000):
                 states = next_states                               # roll over states to next time step
                 if np.any(dones):                                  # exit loop if episode finished
                     break
-            scores_deque.append(scores)
-            scores_all.append(np.mean(scores))
-            # print(f'Dequeue: {scores_deque} mean: {np.mean(scores_deque)}')
 
-            average_score = np.mean(scores_deque)
+            average_score_episode = np.mean(scores)
+            scores_deque.append(average_score_episode)
+            scores_all.append(average_score_episode)
+            average_score_queue = np.mean(scores_deque)
 
-            logger.info('\rEpisode {}\tAverage Score: {:.2f}'.format(i_episode, average_score))
-            if average_score > 30:
-                break
+            logger.info('\rEpisode {}\tScore: {:.2f}\tAverage Score: {:.2f}'.format(i_episode, average_score_episode, average_score_queue))
             torch.save(agent.actor_local.state_dict(), 'checkpoint_actor2.pth')
             torch.save(agent.critic_local.state_dict(), 'checkpoint_critic2.pth')
-            if i_episode % print_every == 0:
-                logger.info('\rEpisode {}\tAverage Score: {:.2f}'.format(i_episode, np.mean(scores_deque)))
+            if average_score_queue > 30:
+                break
+
+            if i_episode % plot_every == 0:
+                plot_curve(scores_all)
 
         return scores_all
 

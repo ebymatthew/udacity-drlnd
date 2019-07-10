@@ -11,22 +11,27 @@ import torch.optim as optim
 
 GAMMA = 0.99            # discount factor
 TAU = 1e-3              # for soft update of target parameters
-LR_ACTOR = 1e-4         # learning rate of the actor 
+LR_ACTOR = 1e-4         # learning rate of the actor
 LR_CRITIC = 1e-3        # learning rate of the critic
 WEIGHT_DECAY = 0        # L2 weight decay
 UPDATE_EVERY = 20        # how often to update the network
 NUM_UPDATES = 10        # how many updates to perform
 
 
-device_name = "cuda:0" if torch.cuda.is_available() else "cpu"
-print(f'Device: {device_name}')
-device = torch.device(device_name)
+def initialize_cuda_device(index):
+    return torch.device(f"cuda:{index}")
+
+
+device_count = torch.cuda.device_count() if torch.cuda.is_available() else 1
+device_names = [f"cuda:{index}" for index in range(device_count)] if torch.cuda.is_available() else ["cpu"]
+print(f'Devices: {device_names}')
+devices = [torch.device(device_name) for device_name in device_names]
 
 
 class Agent:
     """Interacts with and learns from the environment."""
     
-    def __init__(self, state_size, action_size, random_seed, memory, batch_size):
+    def __init__(self, state_size, action_size, random_seed, memory, batch_size, index=0):
         """Initialize an Agent object.
         
         Params
@@ -39,14 +44,16 @@ class Agent:
         self.action_size = action_size
         self.seed = random.seed(random_seed)
 
+        self.device = devices[index % device_count]
+
         # Actor Network (w/ Target Network)
-        self.actor_local = Actor(state_size, action_size, random_seed).to(device)
-        self.actor_target = Actor(state_size, action_size, random_seed).to(device)
+        self.actor_local = Actor(state_size, action_size, random_seed).to(self.device)
+        self.actor_target = Actor(state_size, action_size, random_seed).to(self.device)
         self.actor_optimizer = optim.Adam(self.actor_local.parameters(), lr=LR_ACTOR)
 
         # Critic Network (w/ Target Network)
-        self.critic_local = Critic(state_size, action_size, random_seed).to(device)
-        self.critic_target = Critic(state_size, action_size, random_seed).to(device)
+        self.critic_local = Critic(state_size, action_size, random_seed).to(self.device)
+        self.critic_target = Critic(state_size, action_size, random_seed).to(self.device)
         self.critic_optimizer = optim.Adam(self.critic_local.parameters(), lr=LR_CRITIC, weight_decay=WEIGHT_DECAY)
 
         # Noise process
@@ -64,17 +71,17 @@ class Agent:
     def step(self):
         """use random sample from buffer to learn."""
         # Learn every UPDATE_EVERY time steps.
-        #self.t_step = (self.t_step + 1) % UPDATE_EVERY
-        #if self.t_step == 0:
+        self.t_step = (self.t_step + 1) % UPDATE_EVERY
+        if self.t_step == 0:
             # Learn, if enough samples are available in memory
-        if len(self.memory) > self.batch_size:
-            #for i in range(NUM_UPDATES):
-            experiences = self.memory.sample()
-            self.learn(experiences, GAMMA)
+            if len(self.memory) > self.batch_size:
+                for i in range(NUM_UPDATES):
+                    experiences = self.memory.sample(self.device)
+                    self.learn(experiences, GAMMA)
 
     def act(self, state, add_noise=True):
         """Returns actions for given state as per current policy."""
-        state = torch.from_numpy(state).float().to(device)
+        state = torch.from_numpy(state).float().to(self.device)
         self.actor_local.eval()
         with torch.no_grad():
             action = self.actor_local(state).cpu().data.numpy()
@@ -112,6 +119,7 @@ class Agent:
         # Minimize the loss
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
+        torch.nn.utils.clip_grad_norm(self.critic_local.parameters(), 1)
         self.critic_optimizer.step()
 
         # ---------------------------- update actor ---------------------------- #
@@ -184,7 +192,7 @@ class ReplayBuffer:
         e = self.experience(state, action, reward, next_state, done)
         self.memory.append(e)
     
-    def sample(self):
+    def sample(self, device):
         """Randomly sample a batch of experiences from memory."""
         experiences = random.sample(self.memory, k=self.batch_size)
 

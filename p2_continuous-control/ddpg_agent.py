@@ -8,6 +8,9 @@ from model import Actor, Critic
 import torch
 import torch.nn.functional as F
 import torch.optim as optim
+import logging
+
+logger = logging.getLogger(__name__)
 
 GAMMA = 0.99            # discount factor
 TAU = 1e-3              # for soft update of target parameters
@@ -24,7 +27,7 @@ def initialize_cuda_device(index):
 
 device_count = torch.cuda.device_count() if torch.cuda.is_available() else 1
 device_names = [f"cuda:{index}" for index in range(device_count)] if torch.cuda.is_available() else ["cpu"]
-print(f'Devices: {device_names}')
+logger.info(f'Devices: {device_names}')
 devices = [torch.device(device_name) for device_name in device_names]
 
 

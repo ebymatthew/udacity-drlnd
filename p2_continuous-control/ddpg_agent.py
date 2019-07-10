@@ -64,13 +64,13 @@ class Agent:
     def step(self):
         """use random sample from buffer to learn."""
         # Learn every UPDATE_EVERY time steps.
-        #self.t_step = (self.t_step + 1) % UPDATE_EVERY
-        #if self.t_step == 0:
+        self.t_step = (self.t_step + 1) % UPDATE_EVERY
+        if self.t_step == 0:
             # Learn, if enough samples are available in memory
-        if len(self.memory) > self.batch_size:
-            #for i in range(NUM_UPDATES):
-            experiences = self.memory.sample()
-            self.learn(experiences, GAMMA)
+            if len(self.memory) > self.batch_size:
+                for i in range(NUM_UPDATES):
+                    experiences = self.memory.sample()
+                    self.learn(experiences, GAMMA)
 
     def act(self, state, add_noise=True):
         """Returns actions for given state as per current policy."""

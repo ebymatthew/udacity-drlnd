@@ -29,7 +29,8 @@ def grouper(n, iterable):
     """grouper(3, 'ABCDEFG', 'x') --> ABC DEF Gxx"""
     args = [iter(iterable)] * n
     grouped_padded = itertools.zip_longest(fillvalue=None, *args)
-    grouped_filtered = (x for x in grouped_padded if x is not None)
+    grouped_filtered = ((y for y in x if y is not None) for x in grouped_padded)
+    # logger.info(f'filtered: {grouped_filtered}')
     return grouped_filtered
 
 

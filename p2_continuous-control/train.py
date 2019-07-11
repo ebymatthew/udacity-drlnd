@@ -8,7 +8,7 @@ import numpy as np
 from collections import deque
 import matplotlib.pyplot as plt
 
-from ddpg_agent import Agent, ReplayBuffer
+from ddpg_agent import Agent, ReplayBuffer, Memory
 import logging
 
 import argparse
@@ -61,10 +61,11 @@ def train(env_location, curve_path, n_episodes=1000):
     BUFFER_SIZE = int(1e6)  # replay buffer size
     BATCH_SIZE = 1024        # minibatch size
     random_seed = 2
-    memory = ReplayBuffer(action_size, BUFFER_SIZE, BATCH_SIZE, random_seed)
+    # memory = ReplayBuffer(action_size, BUFFER_SIZE, BATCH_SIZE, random_seed)
+    memory = Memory(BUFFER_SIZE)
 
     def create_agent():
-        return Agent(state_size=states.shape[1], action_size=brain.vector_action_space_size, random_seed=random_seed, memory=memory, batch_size=BATCH_SIZE)
+        return Agent(state_size=states.shape[1], action_size=brain.vector_action_space_size, random_seed=random_seed, memory=memory, memory_size=BUFFER_SIZE, batch_size=BATCH_SIZE)
 
     agents = [create_agent() for _ in range(20)]
 
@@ -105,7 +106,7 @@ def train(env_location, curve_path, n_episodes=1000):
                     next_state = next_states[i] # temporarily rename
                     done = dones[i] # temporarily rename
                     action = actions[i]
-                    memory.add(states[i], action, reward, next_state, done)
+                    memory.store(states[i], action, reward, next_state, done)
 
                     #print(f'state: {states[i]}')
                     #print(f'action: {action}')

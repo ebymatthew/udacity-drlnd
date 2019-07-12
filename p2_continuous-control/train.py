@@ -68,7 +68,7 @@ def train(env_location, curve_path, n_episodes=1000):
 
     agents = [create_agent() for _ in range(20)]
 
-    def ddpg(n_episodes, max_t=300, print_every=50, plot_every=10):
+    def ddpg(n_episodes, max_t=30000, print_every=50, plot_every=10):
         scores_deque = deque(maxlen=print_every)
         scores_all = []
 
@@ -118,6 +118,7 @@ def train(env_location, curve_path, n_episodes=1000):
 
                 scores += env_info.rewards                         # update the score (for each agent)
                 states = next_states                               # roll over states to next time step
+                assert np.any(dones) == np.all(dones), "Expect all to be done at same time"
                 if np.any(dones):                                  # exit loop if episode finished
                     break
 

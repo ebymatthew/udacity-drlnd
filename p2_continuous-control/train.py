@@ -68,36 +68,24 @@ def train(env_location, curve_path, n_episodes=1000):
 
     agents = [create_agent() for _ in range(20)]
 
-    def ddpg(n_episodes, max_t=300, print_every=50, plot_every=10):
+    def ddpg(n_episodes, print_every=50, plot_every=4):
         scores_deque = deque(maxlen=print_every)
         scores_all = []
 
         for i_episode in range(1, n_episodes+1):
             env_info = env.reset(train_mode=True)[brain_name]
             states = np.array(env_info.vector_observations, copy=True)                  # get the current state (for each agent)
-            # state = env.reset()
             for agent in agents:
                 agent.reset()
             scores = np.zeros(num_agents)                          # initialize the score (for each agent)
 
-            # state = states[0]
-
-            for t in range(max_t):
-
+            while True:
                 actions = np.array([agents[i].act(states[i]) for i, state in enumerate(states)])
-                # print(f'action: {action}')
-
-                # actions = np.array([action]) # temporarily rename
                 actions = np.clip(actions, -1, 1)                  # all actions between -1 and 1
-
-                #print(f'actions: {actions}')
                 env_info = env.step(actions)[brain_name]           # send all actions to tne environment
                 next_states = env_info.vector_observations         # get next state (for each agent)
                 rewards = env_info.rewards                         # get reward (for each agent)
                 dones = env_info.local_done                        # see if episode finished
-                #print(f'dones: {dones}')
-                #scores += env_info.rewards                         # update the score (for each agent)
-                #print(f'scores: {scores}')
 
                 # Add experience to replay buffer for all agents
                 for i in range(num_agents):
@@ -107,18 +95,14 @@ def train(env_location, curve_path, n_episodes=1000):
                     action = actions[i]
                     memory.add(states[i], action, reward, next_state, done)
 
-                    #print(f'state: {states[i]}')
-                    #print(f'action: {action}')
-                    #print(f'reward: {reward}')
-                    #print(f'next_state: {next_state}')
-                    #print(f'done: {done}')
-
                 for i in range(num_agents):
                     agents[i].step()
 
                 scores += env_info.rewards                         # update the score (for each agent)
                 states = next_states                               # roll over states to next time step
-                if np.any(dones):                                  # exit loop if episode finished
+                any_done = np.any(done)
+                assert any_done == np.all(done)
+                if any_done:                                  # exit loop if episode finished
                     break
 
             average_score_episode = np.mean(scores)

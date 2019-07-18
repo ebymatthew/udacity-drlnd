@@ -66,7 +66,7 @@ def train(env_location, curve_path, n_episodes=1000):
     def create_agent():
         return Agent(state_size=states.shape[1], action_size=brain.vector_action_space_size, random_seed=random_seed, memory=memory, batch_size=BATCH_SIZE)
 
-    agents = [create_agent() for _ in range(20)]
+    agent = create_agent() # [create_agent() for _ in range(20)]
 
     def ddpg(n_episodes, print_every=50, plot_every=4):
         scores_deque = deque(maxlen=print_every)
@@ -75,12 +75,14 @@ def train(env_location, curve_path, n_episodes=1000):
         for i_episode in range(1, n_episodes+1):
             env_info = env.reset(train_mode=True)[brain_name]
             states = np.array(env_info.vector_observations, copy=True)                  # get the current state (for each agent)
-            for agent in agents:
-                agent.reset()
+            #for agent in agents:
+            agent.reset()
             scores = np.zeros(num_agents)                          # initialize the score (for each agent)
 
             while True:
-                actions = np.array([agents[i].act(states[i]) for i, state in enumerate(states)])
+                #actions = np.array([agents[i].act(states[i]) for i, state in enumerate(states)])
+                actions = agent.act(states)
+
                 actions = np.clip(actions, -1, 1)                  # all actions between -1 and 1
                 env_info = env.step(actions)[brain_name]           # send all actions to tne environment
                 next_states = env_info.vector_observations         # get next state (for each agent)
@@ -95,8 +97,9 @@ def train(env_location, curve_path, n_episodes=1000):
                     action = actions[i]
                     memory.add(states[i], action, reward, next_state, done)
 
-                for i in range(num_agents):
-                    agents[i].step()
+                #for i in range(num_agents):
+                #    agents[i].step()
+                agent.step()
 
                 scores += env_info.rewards                         # update the score (for each agent)
                 states = next_states                               # roll over states to next time step

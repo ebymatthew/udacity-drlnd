@@ -9,26 +9,24 @@ import torch
 import torch.nn.functional as F
 import torch.optim as optim
 
-BUFFER_SIZE = int(1e5)  # replay buffer size
-BATCH_SIZE = 128        # minibatch size
 GAMMA = 0.99            # discount factor
 TAU = 1e-3              # for soft update of target parameters
 LR_ACTOR = 1e-4         # learning rate of the actor 
-LR_CRITIC = 1e-3        # learning rate of the critic
+LR_CRITIC = 1e-4        # learning rate of the critic
 WEIGHT_DECAY = 0        # L2 weight decay
-UPDATE_EVERY = 20        # how often to update the network
-NUM_UPDATES = 10        # how many updates to perform
-
+UPDATE_EVERY = 2        # how often to update the network
+NUM_UPDATES = 1        # how many updates to perform
 
 
 device_name = "cuda:0" if torch.cuda.is_available() else "cpu"
 print(f'Device: {device_name}')
 device = torch.device(device_name)
 
-class Agent():
+
+class Agent:
     """Interacts with and learns from the environment."""
     
-    def __init__(self, state_size, action_size, random_seed):
+    def __init__(self, state_size, action_size, random_seed, memory, batch_size):
         """Initialize an Agent object.
         
         Params
@@ -55,22 +53,21 @@ class Agent():
         self.noise = OUNoise(action_size, random_seed)
 
         # Replay memory
-        self.memory = ReplayBuffer(action_size, BUFFER_SIZE, BATCH_SIZE, random_seed)
+        self.memory = memory
+
+        self.random_seed = random_seed
+        self.batch_size = batch_size
         
         # Initialize time step (for updating every UPDATE_EVERY steps)
         self.t_step = 0
-    
-    def step(self, state, action, reward, next_state, done):
-        """Save experience in replay memory, and use random sample from buffer to learn."""
-        # Save experience / reward
-        self.memory.add(state, action, reward, next_state, done)
 
-        
+    def step(self):
+        """use random sample from buffer to learn."""
         # Learn every UPDATE_EVERY time steps.
         self.t_step = (self.t_step + 1) % UPDATE_EVERY
         if self.t_step == 0:
             # Learn, if enough samples are available in memory
-            if len(self.memory) > BATCH_SIZE:
+            if len(self.memory) > self.batch_size:
                 for i in range(NUM_UPDATES):
                     experiences = self.memory.sample()
                     self.learn(experiences, GAMMA)
@@ -115,6 +112,7 @@ class Agent():
         # Minimize the loss
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
+        torch.nn.utils.clip_grad_norm(self.critic_local.parameters(), 1)
         self.critic_optimizer.step()
 
         # ---------------------------- update actor ---------------------------- #
@@ -146,7 +144,7 @@ class Agent():
 class OUNoise:
     """Ornstein-Uhlenbeck process."""
 
-    def __init__(self, size, seed, mu=0., theta=0.15, sigma=0.2):
+    def __init__(self, size, seed, mu=0., theta=0.15, sigma=0.1):
         """Initialize parameters and noise process."""
         self.mu = mu * np.ones(size)
         self.theta = theta
@@ -164,6 +162,7 @@ class OUNoise:
         dx = self.theta * (self.mu - x) + self.sigma * np.array([random.random() for i in range(len(x))])
         self.state = x + dx
         return self.state
+
 
 class ReplayBuffer:
     """Fixed-size buffer to store experience tuples."""

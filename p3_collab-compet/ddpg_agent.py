@@ -9,13 +9,13 @@ import torch
 import torch.nn.functional as F
 import torch.optim as optim
 
-#GAMMA = 0.99            # discount factor
-#TAU = 1e-3              # for soft update of target parameters
-# LR_ACTOR = 1e-4         # learning rate of the actor
-#LR_CRITIC = 1e-4        # learning rate of the critic
-#WEIGHT_DECAY = 0.0001        # L2 weight decay
-#UPDATE_EVERY = 10        # how often to update the network
-#NUM_UPDATES = 2        # how many updates to perform
+GAMMA = 0.99            # discount factor
+TAU = 1e-3              # for soft update of target parameters
+LR_ACTOR = 1e-4         # learning rate of the actor 
+LR_CRITIC = 1e-4        # learning rate of the critic
+WEIGHT_DECAY = 0        # L2 weight decay
+UPDATE_EVERY = 2        # how often to update the network
+NUM_UPDATES = 1        # how many updates to perform
 
 
 device_name = "cuda:0" if torch.cuda.is_available() else "cpu"
@@ -26,22 +26,7 @@ device = torch.device(device_name)
 class Agent:
     """Interacts with and learns from the environment."""
     
-    def __init__(
-            self,
-            state_size,
-            action_size,
-            random_seed,
-            memory,
-            batch_size,
-            gamma=0.99, # discount factor
-            tau=1e-3,  # for soft update of target parameters
-            lr_actor=1e-4,  # learning rate of the actor
-            lr_critic=1e-4,        # learning rate of the critic
-            weight_decay=0.0001,  # L2 weight decay
-            update_every=10,  # how often to update the network
-            num_updates=2        # how many updates to perform
-
-    ):
+    def __init__(self, state_size, action_size, random_seed, memory, batch_size):
         """Initialize an Agent object.
         
         Params
@@ -57,12 +42,12 @@ class Agent:
         # Actor Network (w/ Target Network)
         self.actor_local = Actor(state_size, action_size, random_seed).to(device)
         self.actor_target = Actor(state_size, action_size, random_seed).to(device)
-        self.actor_optimizer = optim.Adam(self.actor_local.parameters(), lr=lr_actor)
+        self.actor_optimizer = optim.Adam(self.actor_local.parameters(), lr=LR_ACTOR)
 
         # Critic Network (w/ Target Network)
         self.critic_local = Critic(state_size, action_size, random_seed).to(device)
         self.critic_target = Critic(state_size, action_size, random_seed).to(device)
-        self.critic_optimizer = optim.Adam(self.critic_local.parameters(), lr=lr_critic, weight_decay=weight_decay)
+        self.critic_optimizer = optim.Adam(self.critic_local.parameters(), lr=LR_CRITIC, weight_decay=WEIGHT_DECAY)
 
         # Noise process
         self.noise = OUNoise(action_size, random_seed)
@@ -72,11 +57,6 @@ class Agent:
 
         self.random_seed = random_seed
         self.batch_size = batch_size
-
-        self.gamma = gamma
-        self.tau = tau
-        self.update_every = update_every
-        self.num_updates = num_updates
         
         # Initialize time step (for updating every UPDATE_EVERY steps)
         self.t_step = 0
@@ -84,13 +64,13 @@ class Agent:
     def step(self):
         """use random sample from buffer to learn."""
         # Learn every UPDATE_EVERY time steps.
-        self.t_step = (self.t_step + 1) % self.update_every
+        self.t_step = (self.t_step + 1) % UPDATE_EVERY
         if self.t_step == 0:
             # Learn, if enough samples are available in memory
             if len(self.memory) > self.batch_size:
-                for i in range(self.num_updates):
+                for i in range(NUM_UPDATES):
                     experiences = self.memory.sample()
-                    self.learn(experiences, self.gamma)
+                    self.learn(experiences, GAMMA)
 
     def act(self, state, add_noise=True):
         """Returns actions for given state as per current policy."""
@@ -145,8 +125,8 @@ class Agent:
         self.actor_optimizer.step()
 
         # ----------------------- update target networks ----------------------- #
-        self.soft_update(self.critic_local, self.critic_target, self.tau)
-        self.soft_update(self.actor_local, self.actor_target, self.tau)
+        self.soft_update(self.critic_local, self.critic_target, TAU)
+        self.soft_update(self.actor_local, self.actor_target, TAU)                     
 
     def soft_update(self, local_model, target_model, tau):
         """Soft update model parameters.

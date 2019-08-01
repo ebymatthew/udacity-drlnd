@@ -127,11 +127,12 @@ def train(
             # logger.info(f'scores: {scores}')
             # average_score_episode = np.mean(scores)
             score_episode = np.max(scores)
+            best_agent = np.argmax(scores)
             scores_deque.append(score_episode)
             scores_all.append(score_episode)
             average_score_queue = np.mean(scores_deque)
 
-            logger.info('\rEpisode {}\tScore: {:.4f}\tAverage Score: {:.4f}'.format(i_episode, score_episode, average_score_queue))
+            logger.info('\rEpisode {}\tScore: {:.4f}\tBest Agent: {}\tAverage Score: {:.4f}'.format(i_episode, score_episode, best_agent, average_score_queue))
             torch.save(agent0.actor_local.state_dict(), 'checkpoint_actor0.pth')
             torch.save(agent0.critic_local.state_dict(), 'checkpoint_critic0.pth')
             torch.save(agent1.actor_local.state_dict(), 'checkpoint_actor1.pth')

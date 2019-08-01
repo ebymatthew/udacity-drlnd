@@ -126,7 +126,7 @@ def train(
 
             # logger.info(f'scores: {scores}')
             # average_score_episode = np.mean(scores)
-            score_episode = np.min(scores)
+            score_episode = np.max(scores)
             scores_deque.append(score_episode)
             scores_all.append(score_episode)
             average_score_queue = np.mean(scores_deque)

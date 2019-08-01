@@ -37,7 +37,9 @@ class Actor(nn.Module):
 
     def forward(self, state):
         """Build an actor (policy) network that maps states -> actions."""
-        x = F.relu(self.fc1(state))
+        if state.dim() == 1:
+            state = torch.unsqueeze(state, 0)
+        x = F.relu(self.fc1(self.bn0(state)))
         x = F.relu(self.fc2(x))
         return F.tanh(self.fc3(x))
 
@@ -45,7 +47,7 @@ class Actor(nn.Module):
 class Critic(nn.Module):
     """Critic (Value) Model."""
 
-    def __init__(self, state_size, action_size, seed, fcs1_units=512, fc2_units=256g):
+    def __init__(self, state_size, action_size, seed, fcs1_units=512, fc2_units=256):
         """Initialize parameters and build model.
         Params
         ======

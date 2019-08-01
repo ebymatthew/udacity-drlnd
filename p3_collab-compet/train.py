@@ -35,15 +35,8 @@ def train(
         env_location,
         curve_path,
         n_episodes=1000,
-        batch_size=2048,
+        batch_size=512,
         buffer_size=int(1e6),
-        gamma=0.99,  # discount factor
-        tau=5e-4,  # for soft update of target parameters
-        lr_actor=1e-4,  # learning rate of the actor
-        lr_critic=1e-5,  # learning rate of the critic
-        weight_decay=0.0001,  # L2 weight decay
-        update_every=10,  # how often to update the network
-        num_updates=1  # how many updates to perform
     ):
 
     env = UnityEnvironment(file_name=env_location)
@@ -73,25 +66,20 @@ def train(
 
     # Replay memory
     random_seed = 2
-    memory = ReplayBuffer(action_size, buffer_size, batch_size, random_seed)
+    memory0 = ReplayBuffer(action_size, buffer_size, batch_size, random_seed)
+    memory1 = ReplayBuffer(action_size, buffer_size, batch_size, random_seed)
 
-    def create_agent():
+    def create_agent(memory):
         return Agent(
             state_size=states.shape[1],
             action_size=brain.vector_action_space_size,
             random_seed=random_seed,
             memory=memory,
-            batch_size=batch_size,
-            gamma=gamma,
-            tau=tau,
-            lr_actor=lr_actor,
-            lr_critic=lr_critic,
-            weight_decay=weight_decay,
-            update_every=update_every,
-            num_updates=num_updates
+            batch_size=batch_size
         )
 
-    agent = create_agent()
+    agent0 = create_agent(memory0)
+    agent1 = create_agent(memory1)
 
     def ddpg(n_episodes, average_window=100, plot_every=4):
         scores_deque = deque(maxlen=average_window)
@@ -100,46 +88,54 @@ def train(
         for i_episode in range(1, n_episodes+1):
             env_info = env.reset(train_mode=True)[brain_name]
             states = np.array(env_info.vector_observations, copy=True)                  # get the current state (for each agent)
-            agent.reset()
+            agent0.reset()
+            agent1.reset()
             scores = np.zeros(num_agents)                          # initialize the score (for each agent)
 
             while True:
-                actions = agent.act(states)
+                action0 = agent0.act(states[0])
+                action1 = agent1.act(states[1])
+                actions = np.concatenate((action0, action1))
 
-                actions = np.clip(actions, -1, 1)                  # all actions between -1 and 1
+                # actions = np.clip(actions, -1, 1)                  # all actions between -1 and 1
                 env_info = env.step(actions)[brain_name]           # send all actions to tne environment
                 next_states = env_info.vector_observations         # get next state (for each agent)
                 rewards = env_info.rewards                         # get reward (for each agent)
                 dones = env_info.local_done                        # see if episode finished
 
                 # Add experience to replay buffer for all agents
-                reward = np.sum(rewards)
-                for i in range(num_agents):
-                    # reward = np.sum(rewards) # temporarily rename
-                    next_state = next_states[i] # temporarily rename
-                    done = dones[i] # temporarily rename
-                    action = actions[i]
-                    memory.add(states[i], action, reward, next_state, done)
+                #reward = np.sum(rewards)
+                #for i in range(num_agents):
+                #    # reward = np.sum(rewards) # temporarily rename
+                #    next_state = next_states[i] # temporarily rename
+                #    done = dones[i] # temporarily rename
+                #    action = actions[i]
 
-                agent.step()
+                memory0.add(states[0], action0, rewards[0], next_states[0], dones[0])
+                memory1.add(states[1], action1, rewards[1], next_states[1], dones[1])
+
+                agent0.step()
+                agent1.step()
 
                 scores += env_info.rewards                         # update the score (for each agent)
                 states = next_states                               # roll over states to next time step
-                any_done = np.any(done)
-                assert any_done == np.all(done)
+                any_done = np.any(dones)
+                assert any_done == np.all(dones)
                 if any_done:                                  # exit loop if episode finished
                     break
 
             # logger.info(f'scores: {scores}')
             # average_score_episode = np.mean(scores)
-            score_episode = np.max(scores)
+            score_episode = np.min(scores)
             scores_deque.append(score_episode)
             scores_all.append(score_episode)
             average_score_queue = np.mean(scores_deque)
 
             logger.info('\rEpisode {}\tScore: {:.4f}\tAverage Score: {:.4f}'.format(i_episode, score_episode, average_score_queue))
-            torch.save(agent.actor_local.state_dict(), 'checkpoint_actor2.pth')
-            torch.save(agent.critic_local.state_dict(), 'checkpoint_critic2.pth')
+            torch.save(agent0.actor_local.state_dict(), 'checkpoint_actor0.pth')
+            torch.save(agent0.critic_local.state_dict(), 'checkpoint_critic0.pth')
+            torch.save(agent1.actor_local.state_dict(), 'checkpoint_actor1.pth')
+            torch.save(agent1.critic_local.state_dict(), 'checkpoint_critic1.pth')
             if i_episode > average_window and average_score_queue > 1.0:
                 break
 

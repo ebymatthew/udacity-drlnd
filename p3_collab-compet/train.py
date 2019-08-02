@@ -1,7 +1,5 @@
 from unityagents import UnityEnvironment
-import numpy as np
-import gym
-import random
+
 import time
 import torch
 import numpy as np
@@ -67,7 +65,6 @@ def train(
     # Replay memory
     random_seed = 2
     memory0 = ReplayBuffer(action_size, buffer_size, batch_size, random_seed)
-    #memory1 = ReplayBuffer(action_size, buffer_size, batch_size, random_seed)
     memory1 = memory0
 
     def create_agent(memory):
@@ -81,7 +78,6 @@ def train(
 
     agent0 = create_agent(memory0)
     agent1 = create_agent(memory1)
-    #agent1 = agent0
 
     def ddpg(n_episodes, average_window=100, plot_every=4):
         scores_deque = deque(maxlen=average_window)
@@ -99,19 +95,10 @@ def train(
                 action1 = agent1.act(states[1])
                 actions = np.concatenate((action0, action1))
 
-                # actions = np.clip(actions, -1, 1)                  # all actions between -1 and 1
                 env_info = env.step(actions)[brain_name]           # send all actions to tne environment
                 next_states = env_info.vector_observations         # get next state (for each agent)
                 rewards = env_info.rewards                         # get reward (for each agent)
                 dones = env_info.local_done                        # see if episode finished
-
-                # Add experience to replay buffer for all agents
-                #reward = np.sum(rewards)
-                #for i in range(num_agents):
-                #    # reward = np.sum(rewards) # temporarily rename
-                #    next_state = next_states[i] # temporarily rename
-                #    done = dones[i] # temporarily rename
-                #    action = actions[i]
 
                 memory0.add(states[0], action0, rewards[0], next_states[0], dones[0])
                 memory1.add(states[1], action1, rewards[1], next_states[1], dones[1])
@@ -126,8 +113,6 @@ def train(
                 if any_done:                                  # exit loop if episode finished
                     break
 
-            # logger.info(f'scores: {scores}')
-            # average_score_episode = np.mean(scores)
             score_episode = np.max(scores)
             best_agent = np.argmax(scores)
             scores_deque.append(score_episode)
@@ -148,17 +133,9 @@ def train(
         return scores_all
 
     scores = ddpg(n_episodes=n_episodes)
-
-    fig = plt.figure()
-    ax = fig.add_subplot(111)
-    plt.plot(np.arange(1, len(scores)+1), scores)
-    plt.ylabel('Score')
-    plt.xlabel('Episode #')
-    plt.savefig('learning.curve.png')
+    plot_curve(scores)
 
     env.close()
-
-    #return np.mean(scores[:-100])
 
     # calculate max score over sliding window of 100
     scores = list(scores)

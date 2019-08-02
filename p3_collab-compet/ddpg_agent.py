@@ -63,7 +63,7 @@ class Agent:
 
         # noise decay
         self.epsilon = 1.0
-        self.epsilon_decay = 0.9995
+        self.epsilon_decay = 0.999
 
     def step(self):
         """use random sample from buffer to learn."""

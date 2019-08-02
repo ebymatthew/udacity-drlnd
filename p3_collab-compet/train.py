@@ -67,7 +67,8 @@ def train(
     # Replay memory
     random_seed = 2
     memory0 = ReplayBuffer(action_size, buffer_size, batch_size, random_seed)
-    memory1 = ReplayBuffer(action_size, buffer_size, batch_size, random_seed)
+    #memory1 = ReplayBuffer(action_size, buffer_size, batch_size, random_seed)
+    memory1 = memory0
 
     def create_agent(memory):
         return Agent(
@@ -80,6 +81,7 @@ def train(
 
     agent0 = create_agent(memory0)
     agent1 = create_agent(memory1)
+    #agent1 = agent0
 
     def ddpg(n_episodes, average_window=100, plot_every=4):
         scores_deque = deque(maxlen=average_window)

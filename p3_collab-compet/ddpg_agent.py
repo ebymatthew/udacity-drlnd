@@ -14,8 +14,8 @@ TAU = 2e-1              # for soft update of target parameters
 LR_ACTOR = 1e-4         # learning rate of the actor 
 LR_CRITIC = 4e-4        # learning rate of the critic
 WEIGHT_DECAY = 0        # L2 weight decay
-UPDATE_EVERY = 1        # how often to update the network
-NUM_UPDATES = 1        # how many updates to perform
+UPDATE_EVERY = 20        # how often to update the network
+NUM_UPDATES = 10        # how many updates to perform
 
 
 device_name = "cuda:0" if torch.cuda.is_available() else "cpu"
@@ -61,6 +61,10 @@ class Agent:
         # Initialize time step (for updating every UPDATE_EVERY steps)
         self.t_step = 0
 
+        # noise decay
+        self.epsilon = 1.0
+        self.epsilon_decay = 0.9995
+
     def step(self):
         """use random sample from buffer to learn."""
         # Learn every UPDATE_EVERY time steps.
@@ -80,7 +84,8 @@ class Agent:
             action = self.actor_local(state).cpu().data.numpy()
         self.actor_local.train()
         if add_noise:
-            action += self.noise.sample()
+            action += self.noise.sample() * self.epsilon
+            self.epsilon = self.epsilon * self.epsilon_decay 
         return np.clip(action, -1, 1)
 
     def reset(self):

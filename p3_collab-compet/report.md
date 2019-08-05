@@ -76,7 +76,7 @@ network and the updated *local* network, with *tau* contribution from the *local
 
 The **DQN** algorithm, is a RL algorithm which learns a *Q* estimator which is then used to make policy decisions. 
 This works well for discrete actions spaces where evaluation the *Q* estimate for each action is tractable. The maximal
-policy is action with the maximum *Q* estimate.
+policy chooses the action with the maximum *Q* estimate.
 
 For continuous action spaces it is intractable to estimate the *Q* value for all possible actions. We need a different 
 approach. The *Actor* network defines a function which maps directly from states to actions. The *Actor* function is captured with

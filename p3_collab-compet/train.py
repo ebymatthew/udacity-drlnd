@@ -20,10 +20,12 @@ parser.add_argument('--env', default='./Reacher_Linux_NoVis20/Reacher.x86', help
 parser.add_argument('--curve', default='learning.curve.png', help='Location to output learning curve')
 
 
-def plot_curve(scores):
+def plot_curve(scores, average_scores):
     fig = plt.figure()
     ax = fig.add_subplot(111)
-    plt.plot(np.arange(1, len(scores)+1), scores)
+    plt.plot(np.arange(1, len(scores)+1), scores, label='Score')
+    plt.plot(np.arange(1, len(average_scores)+1), average_scores, label='Score - 100 Episode Floating Average')
+    ax.legend()
     plt.ylabel('Score')
     plt.xlabel('Episode #')
     plt.savefig('learning.curve.png')
@@ -82,6 +84,7 @@ def train(
     def ddpg(n_episodes, average_window=100, plot_every=4):
         scores_deque = deque(maxlen=average_window)
         scores_all = []
+        average_scores_all = []
 
         for i_episode in range(1, n_episodes+1):
             env_info = env.reset(train_mode=True)[brain_name]
@@ -118,6 +121,7 @@ def train(
             scores_deque.append(score_episode)
             scores_all.append(score_episode)
             average_score_queue = np.mean(scores_deque)
+            average_scores_all.append(average_score_queue)
 
             logger.info('\rEpisode {}\tScore: {:.4f}\tBest Agent: {}\tAverage Score: {:.4f}'.format(i_episode, score_episode, best_agent, average_score_queue))
             torch.save(agent0.actor_local.state_dict(), 'checkpoint_actor0.pth')
@@ -128,21 +132,16 @@ def train(
                 break
 
             if i_episode % plot_every == 0:
-                plot_curve(scores_all)
+                plot_curve(scores_all, average_scores_all)
 
-        return scores_all
+        return scores_all, average_scores_all
 
-    scores = ddpg(n_episodes=n_episodes)
-    plot_curve(scores)
+    scores, average_scores = ddpg(n_episodes=n_episodes)
+    plot_curve(scores, average_scores)
 
     env.close()
 
-    # calculate max score over sliding window of 100
-    scores = list(scores)
-    windows = [scores[i:i + 100] for i, _ in enumerate(scores)]
-    windows_full = [w for w in windows if len(w) == 100]
-    windows_averages = [np.mean(w) for w in windows_full]
-    return np.max(windows_averages)
+    return np.max(average_scores)
 
 
 if __name__ == '__main__':

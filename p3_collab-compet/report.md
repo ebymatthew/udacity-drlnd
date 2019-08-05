@@ -1,5 +1,9 @@
 # Learning Algorithm and Model Architecture
 
+In this project, the Tennis environment is solved using two independent DDPG agents controlling each of the actors.
+Below, we describe the DDPG algorithm and architecture used to solve the environment. Before describing DDPG,
+we first describe the Bellman Equation, TD Learning and DQNs, which are foundational concepts that DDPG builds on. 
+
 **Bellman Equation**
 
 The *Bellman Equation* in the context of Reinforcement Learning is defined below:
@@ -68,7 +72,19 @@ are updated based on the gradient from the *TD Error*. After each learning step,
 network and the updated *local* network, with *tau* contribution from the *local* network and *1-tau* contribution from the previous *target* network. 
 *tau*
 
-In order to make the most use of our experience we define a reply buffer that will keep the *n* most recent episodes to learn from.
+**DDPG**
+
+The **DQN** algorithm, is a RL algorithm which learns a *Q* estimator which is then used to make policy decisions. 
+This works well for discrete actions spaces where evaluation the *Q* estimate for each action is tractable. The maximal
+policy is action with the maximum *Q* estimate.
+
+For continuous action spaces it is intractable to estimate the *Q* value for all possible actions. We need a different 
+approach. The *Actor* network defines a function which maps directly from states to actions. The *Actor* function is captured with
+a neural network architecture that outputs continuous values avoiding the discrete action limitations of DQNs.
+
+In order, to train the *Actor* we use a *Critic* network which is a *Q* estimator similar to DQNs. During training,
+as we gain experience it is added to a replay buffer. During learning the *Critic* is trained similar to the way the *Q*
+network is trained in DQN. Then to train the *Actor* network the *Critic* is evaluated to calculate the loss of the *Actor* network.
 
 *Hyperparameters*
 
@@ -76,19 +92,20 @@ A variety of hyperparameters were evaluated, with the following table describing
 
 |Parameter|Value|Parameter Description|Rationale|
 |----------|-------|------------|---------------|
-|BUFFER_SIZE|1e5|replay buffer size|This replay buffer size provides sufficient memory to remember enough history to learn from while minimizing memory resources requirements. Too small of a memory would throw away too much gained experience and slow down learning.| 
+|BUFFER_SIZE|1e6|replay buffer size|This replay buffer size provides sufficient memory to remember enough history to learn from while minimizing memory resources requirements. Too small of a memory would throw away too much gained experience and slow down learning.| 
 |GAMMA|0.99|future reward discount factor|This value balances staying alive to gain future reward and prevents the agent for wondering aimlessly because it doesn't care how far in the future the rewards are obtained. A value less than one gives the agent reason to quickly get to the next reward. If the value is 0, the agent would not care if it dies because future rewards have no value.|
-|TAU|1e-3|for soft update of target parameters|The small value of *tau* results in small incremental updates to the target network over time. As time progresses the *target* network will converge to the true *Q* function.|
-|LR|9e-4|learning rate|Too small of a learning rate would slow learning down, too large of a learning rate would cause weights to fluctuate and prevent convergence|
-|UPDATE_EVERY|4|how often to update the network|Small values will cause us to make conclusions without much experience. Large values slow learning because we don't stop to reflect on our experiences.|
+|TAU|2e-1|for soft update of target parameters|The small value of *tau* results in small incremental updates to the target network over time. As time progresses the *target* network will converge to the true *Q* function.|
+|LR_ACTOR|1e-4|learning rate|Too small of a learning rate would slow learning down, too large of a learning rate would cause weights to fluctuate and prevent convergence|
+|LR_CRITIC|4e-4|learning rate|Too small of a learning rate would slow learning down, too large of a learning rate would cause weights to fluctuate and prevent convergence|
+|UPDATE_EVERY|20|how often to update the network|Small values will cause us to make conclusions without much experience. Large values slow learning because we don't stop to reflect on our experiences.|
+|NUM_UPDATES|10|how many times to updated the network|Small values will cause us to not learn much from our experience and can cause slow learning, too large of a value would cause our network to be unstable and forget what we've learned|
 |eps_start|1.0|starting value of epsilon, for epsilon-greedy action selection|At the beginning of learning we don't know anything so we want to try many different actions to get information about which actions tend to be better|
-|eps_end|0.01|minimum value of epsilon|After we've learned a lot we know generally what actions lead to more rewards. We believe we are near the optimal policy, so we'd like to search near the current policy by mostly taking value maximizing actions and taking small number of random steps.|
-|eps_decay|0.99|multiplicative factor (per episode) for decreasing epsilon|We'd like to slowly transition from exploring to exploiting. A decay of 0.99 allows us to slowly switch to exploit model. Too high of a decay means we never stop exploring. Too low of a decay value means we stop exploring before we've gained enough experience.|
+|eps_decay|0.999|multiplicative factor (per episode) for decreasing epsilon|We'd like to slowly transition from exploring to exploiting. A decay of 0.99 allows us to slowly switch to exploit model. Too high of a decay means we never stop exploring. Too low of a decay value means we stop exploring before we've gained enough experience.|
 
-The following learning curve demonstrates the agent converging after after ~450 episodes. For the Banana, environment we consider the agent successfully trained when it
-achieves an average score of 13.0: 
+The following learning curve demonstrates the agent converging after after ~600 episodes. For the Tennis, environment we consider the agents successfully trained when
+the highest scoring agent over 100 episodes scores an average score of +0.5: 
 
-![Learning Curve](./img/reward_learning_curve.png)
+![Learning Curve](./img/learning.curve.14181d76b5b7ec505a4b611e7159d56a38c9a27d.png)
 
 # Future Work
  
@@ -98,7 +115,7 @@ of suggested next steps are described below:
 *Hyperparameter Optimization*
 
 The parameters described above we chosen based on intuition and manually evaluating a small number of combinations.
-A more thorough parameter search would likely lead to improved model performance. Some common optimization approaches include grid search and bayesian optimzation.
+A more thorough parameter search would likely lead to improved model performance. Some common optimization approaches include grid search and bayesian optimization.
 
 *Network Architecture*
 
@@ -106,4 +123,4 @@ We did not extensively evaluate neural network architectures. There are a large 
 
 *Learning from Images*
 
-The input state from the Banana environment included state information, such as position and ray traces from the Unity engine. Future work could explore learning directly from pixels. 
+The input state from the Tennis environment included state information, such as position and ray traces from the Unity engine. Future work could explore learning directly from pixels. 

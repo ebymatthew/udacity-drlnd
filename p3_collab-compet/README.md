@@ -24,7 +24,7 @@ The task is episodic, and in order to solve the environment, the agents must get
 The environment is considered solved, when the average (over 100 episodes) of those **scores** is at least +0.5.
 
 This readme describes how to install the environment, train an agent and run a trained agent.
-Refer to the [report.md](report.md) for an in depth description of the implementation and how DDPG work.
+Refer to the [report.md](report.md) for an in depth description of the implementation and how DDPG works.
 
 ### Getting Started
 

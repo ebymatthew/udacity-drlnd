@@ -86,6 +86,12 @@ In order, to train the *Actor* we use a *Critic* network which is a *Q* estimato
 as we gain experience it is added to a replay buffer. During learning the *Critic* is trained similar to the way the *Q*
 network is trained in DQN. Then to train the *Actor* network the *Critic* is evaluated to calculate the loss of the *Actor* network.
 
+Now we will describe the chosen network architectures for the *Actor* and *Critic*. Both networks are implemented as a 3 layer
+MLP, the two hidden layers fully connected with ReLU activation. The layers have 256 and 128 units for the first and second layer respectively.
+The output layer has tanh activation produce continuous output from -1.0 to 1.0. For both networks, we also
+batch normalize the input before feeding into the first layer. In the *Critic*, we feed the state into the first layer and the 
+actions are concatenated to the first layer activations which is then fed into the second layer.
+
 *Hyperparameters*
 
 A variety of hyperparameters were evaluated, with the following table describing the chosen hyperparameters along with rationale:
